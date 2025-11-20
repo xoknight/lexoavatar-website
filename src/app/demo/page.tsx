@@ -49,16 +49,20 @@ export default function DemoPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
+      {/* 导航栏 - 修复了文字颜色 */}
       <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-2 text-slate-700 hover:text-blue-600">
+            <Link href="/" className="flex items-center space-x-2 text-slate-700 hover:text-blue-600 transition">
               <ArrowLeft className="h-5 w-5" />
               <span>返回首页</span>
             </Link>
             <div className="flex items-center space-x-3">
               <Brain className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold">律智人科技</span>
+              <div>
+                <div className="text-lg font-bold text-slate-900">律智人科技</div>
+                <div className="text-xs text-slate-500">LexoAvatar</div>
+              </div>
             </div>
           </div>
         </div>
@@ -76,7 +80,7 @@ export default function DemoPage() {
           </motion.div>
 
           <div className="bg-white rounded-2xl shadow-xl p-8">
-            {/* 行业选择 */}
+            {/* 行业选择 - 修复了按钮样式 */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-slate-700 mb-3">
                 选择行业场景
@@ -91,10 +95,10 @@ export default function DemoPage() {
                   <button
                     key={item.value}
                     onClick={() => setIndustry(item.value)}
-                    className={`p-3 rounded-lg border-2 transition ${
+                    className={`p-3 rounded-lg border-2 transition font-medium ${
                       industry === item.value
                         ? 'border-blue-600 bg-blue-50 text-blue-600'
-                        : 'border-slate-200 hover:border-blue-300'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400 hover:bg-slate-50'
                     }`}
                   >
                     {item.label}
@@ -114,7 +118,7 @@ export default function DemoPage() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="例如：请帮我分析一下..."
-                  className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 placeholder-slate-400"
                   disabled={loading}
                 />
                 <button
@@ -149,7 +153,7 @@ export default function DemoPage() {
                 className="p-6 bg-slate-50 rounded-lg border border-slate-200"
               >
                 <div className="flex items-start space-x-3">
-                  <Brain className="h-6 w-6 text-blue-600 mt-1" />
+                  <Brain className="h-6 w-6 text-blue-600 mt-1 flex-shrink-0" />
                   <div className="flex-1">
                     <div className="text-sm text-slate-500 mb-2">AI 回复：</div>
                     <div className="text-slate-700 leading-relaxed whitespace-pre-wrap">
