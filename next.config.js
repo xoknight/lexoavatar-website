@@ -1,8 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',  // 静态导出（Cloudflare Pages需要）
+output: 'export',
   images: {
-    unoptimized: true  // Cloudflare Pages需要
+    unoptimized: true,
+    formats: ['image/webp'],
+  },
+  // 启用压缩
+  compress: true,
+  // 生成sitemap
+  generateBuildId: async () => {
+    return 'lexoavatar-build-' + Date.now()
   },
   // 如果部署到子路径，取消下面注释
   // basePath: '/subfolder',
