@@ -1,10 +1,52 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Brain, ArrowLeft } from 'lucide-react'
+import { Brain, ArrowLeft, Send, Loader2 } from 'lucide-react'
 
 export default function DemoPage() {
+  const [message, setMessage] = useState('')
+  const [industry, setIndustry] = useState('default')
+  const [response, setResponse] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!message.trim()) {
+      setError('请输入消息')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    setResponse('')
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message, industry }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || '请求失败')
+      }
+
+      setResponse(data.response)
+    } catch (err: any) {
+      setError(err.message || '发生错误，请稍后重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
       <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
@@ -27,24 +69,110 @@ export default function DemoPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center"
+            className="text-center mb-8"
           >
-            <h1 className="text-5xl font-bold text-slate-900 mb-4">在线演示</h1>
-            <p className="text-xl text-slate-600 mb-8">体验我们的AI数据服务</p>
-            
-            <div className="bg-white p-12 rounded-2xl shadow-xl">
-              <div className="text-6xl mb-6">🚧</div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">功能开发中</h2>
-              <p className="text-slate-600 mb-8">
-                我们正在为您准备精彩的演示功能，敬请期待！
-              </p>
-              <Link href="/">
-                <button className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 transition">
-                  返回首页
-                </button>
-              </Link>
-            </div>
+            <h1 className="text-5xl font-bold text-slate-900 mb-4">AI助手演示</h1>
+            <p className="text-xl text-slate-600">体验我们的AI数据服务能力</p>
           </motion.div>
+
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            {/* 行业选择 */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-700 mb-3">
+                选择行业场景
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { value: 'default', label: '通用' },
+                  { value: 'legal', label: '法律' },
+                  { value: 'finance', label: '金融' },
+                  { value: 'healthcare', label: '医疗' }
+                ].map((item) => (
+                  <button
+                    key={item.value}
+                    onClick={() => setIndustry(item.value)}
+                    className={`p-3 rounded-lg border-2 transition ${
+                      industry === item.value
+                        ? 'border-blue-600 bg-blue-50 text-blue-600'
+                        : 'border-slate-200 hover:border-blue-300'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 输入框 */}
+            <form onSubmit={handleSubmit} className="mb-6">
+              <label className="block text-sm font-medium text-slate-700 mb-3">
+                输入您的问题
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="例如：请帮我分析一下..."
+                  className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
+                />
+                <button
+                  type="submit"
+                  disabled={loading || !message.trim()}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center"
+                >
+                  {loading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="h-5 w-5 mr-2" />
+                      发送
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {/* 错误提示 */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
+                {error}
+              </div>
+            )}
+
+            {/* 响应结果 */}
+            {response && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-6 bg-slate-50 rounded-lg border border-slate-200"
+              >
+                <div className="flex items-start space-x-3">
+                  <Brain className="h-6 w-6 text-blue-600 mt-1" />
+                  <div className="flex-1">
+                    <div className="text-sm text-slate-500 mb-2">AI 回复：</div>
+                    <div className="text-slate-700 leading-relaxed whitespace-pre-wrap">
+                      {response}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* 提示 */}
+            {!response && !loading && (
+              <div className="text-center text-slate-400 text-sm">
+                💡 选择行业场景后，输入您的问题，体验AI助手的专业能力
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm text-slate-500">
+              本演示使用 GPT-3.5 模型 · 数据由律智人科技提供
+            </p>
+          </div>
         </div>
       </div>
     </div>
