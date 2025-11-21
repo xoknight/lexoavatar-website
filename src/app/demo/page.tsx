@@ -25,13 +25,13 @@ export default function DemoPage() {
     setResponse('')
 
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message, industry }),
-      })
+const res = await fetch('https://api.lexoavatar.com/api/chat', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ message, industry }),
+})
 
       const data = await res.json()
 
