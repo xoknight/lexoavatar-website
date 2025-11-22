@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Brain, ArrowLeft, Send, Loader2, Sparkles, Zap, MessageSquare, Copy, Check } from 'lucide-react'
+import { Brain, ArrowLeft, Send, Loader2, Sparkles, Zap, MessageSquare } from 'lucide-react'
 import { getAllModels, MODELS_BY_PROVIDER, DEFAULT_MODEL } from '@/lib/ai-models'
-import MarkdownRenderer from '@/components/MarkdownRenderer'
 
 export default function DemoPage() {
   const [message, setMessage] = useState('')
@@ -14,19 +13,9 @@ export default function DemoPage() {
   const [response, setResponse] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [copied, setCopied] = useState(false)
-  const responseEndRef = useRef<HTMLDivElement>(null)
 
   const allModels = getAllModels()
 
-  // 自动滚动到底部
-  useEffect(() => {
-    if (response && responseEndRef.current) {
-      responseEndRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [response])
-
-  // 流式响应处理
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -40,7 +29,7 @@ export default function DemoPage() {
     setResponse('')
 
     try {
-      const res = await fetch('/api/chat-stream', {
+      const res = await fetch('https://api.lexoavatar.com/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,62 +41,18 @@ export default function DemoPage() {
         }),
       })
 
+      const data = await res.json()
+
       if (!res.ok) {
-        const data = await res.json()
         throw new Error(data.error || '请求失败')
       }
 
-      // 处理流式响应
-      const reader = res.body?.getReader()
-      const decoder = new TextDecoder()
-
-      if (!reader) {
-        throw new Error('无法读取响应流')
-      }
-
-      let accumulatedText = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-
-        if (done) break
-
-        const chunk = decoder.decode(value, { stream: true })
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6))
-
-              if (data.type === 'content') {
-                accumulatedText += data.text
-                setResponse(accumulatedText)
-              } else if (data.type === 'error') {
-                throw new Error(data.error)
-              } else if (data.type === 'done') {
-                setLoading(false)
-              }
-            } catch (e) {
-              // 忽略JSON解析错误（可能是不完整的数据块）
-            }
-          }
-        }
-      }
-
-      setLoading(false)
-
+      setResponse(data.response)
     } catch (err: any) {
       setError(err.message || '发生错误，请稍后重试')
+    } finally {
       setLoading(false)
     }
-  }
-
-  // 复制到剪贴板
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(response)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
   }
 
   const getProviderColor = (provider: string) => {
@@ -168,7 +113,7 @@ export default function DemoPage() {
               <Sparkles className="h-12 w-12 text-blue-600" />
               多模型AI助手
             </h1>
-            <p className="text-xl text-slate-600">支持 ChatGPT、Claude、Gemini 等多个顶级AI模型 · 流式输出 · Markdown渲染</p>
+            <p className="text-xl text-slate-600">支持 ChatGPT、Claude、Gemini 等多个顶级AI模型</p>
           </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-6">
@@ -356,38 +301,22 @@ export default function DemoPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="p-6 bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg border border-slate-200 relative"
+                      className="p-6 bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg border border-slate-200"
                     >
                       <div className="flex items-start space-x-3">
-                        <div className={`p-2 rounded-lg bg-gradient-to-r ${getProviderColor(allModels.find(m => m.id === selectedModel)?.provider || 'openai')} flex-shrink-0`}>
+                        <div className={`p-2 rounded-lg bg-gradient-to-r ${getProviderColor(allModels.find(m => m.id === selectedModel)?.provider || 'openai')}`}>
                           <Brain className="h-6 w-6 text-white" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-3">
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-semibold text-slate-700">AI 回复</div>
-                              <span className={`text-xs px-2 py-1 rounded-full border ${getProviderBadgeColor(allModels.find(m => m.id === selectedModel)?.provider || 'openai')}`}>
-                                {allModels.find(m => m.id === selectedModel)?.name}
-                              </span>
-                              {loading && (
-                                <span className="text-xs text-slate-500 flex items-center gap-1">
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                  生成中...
-                                </span>
-                              )}
-                            </div>
-                            <button
-                              onClick={copyToClipboard}
-                              className="text-slate-500 hover:text-slate-700 transition p-2 rounded hover:bg-white"
-                              title="复制回复"
-                            >
-                              {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                            </button>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="text-sm font-semibold text-slate-700">AI 回复</div>
+                            <span className={`text-xs px-2 py-1 rounded-full border ${getProviderBadgeColor(allModels.find(m => m.id === selectedModel)?.provider || 'openai')}`}>
+                              {allModels.find(m => m.id === selectedModel)?.name}
+                            </span>
                           </div>
-                          <div className="text-slate-700 leading-relaxed">
-                            <MarkdownRenderer content={response} />
+                          <div className="text-slate-700 leading-relaxed whitespace-pre-wrap">
+                            {response}
                           </div>
-                          <div ref={responseEndRef} />
                         </div>
                       </div>
                     </motion.div>
@@ -399,7 +328,7 @@ export default function DemoPage() {
                   <div className="text-center text-slate-400 text-sm py-8">
                     <div className="text-4xl mb-3">🤖</div>
                     <p>选择AI模型和行业场景，然后输入您的问题</p>
-                    <p className="text-xs mt-2">体验流式输出和Markdown格式化回复</p>
+                    <p className="text-xs mt-2">体验不同AI模型的独特能力</p>
                   </div>
                 )}
               </div>
@@ -410,7 +339,7 @@ export default function DemoPage() {
                   支持 OpenAI、Anthropic Claude、Google Gemini 等多个AI模型
                 </p>
                 <p className="text-xs text-slate-400 mt-1">
-                  由律智人科技提供技术支持 · 支持流式输出和Markdown渲染
+                  由律智人科技提供技术支持
                 </p>
               </div>
             </div>
