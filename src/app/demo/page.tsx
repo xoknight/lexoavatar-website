@@ -37,7 +37,7 @@ export default function DemoPage() {
         body: JSON.stringify({
           message,
           industry,
-          modelId: selectedModel
+          model: selectedModel
         }),
       })
 
